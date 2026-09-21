@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.googleServices)
+    alias(libs.plugins.compose.compiler)
+
 }
 
 android {
@@ -34,6 +36,12 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    buildFeatures {
+        compose=true
+    }
+    composeOptions{
+        kotlinCompilerExtensionVersion = "1.5.15"
+    }
 }
 
 dependencies {
@@ -47,4 +55,11 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
+    implementation("com.google.firebase:firebase-auth")
+    implementation(platform(libs.androidx.compose.bom))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.activity:activity-compose")
+    debugImplementation("androidx.compose.ui:ui-tooling")
 }
