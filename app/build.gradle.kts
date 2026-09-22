@@ -45,6 +45,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.firebase.firestore)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.appcompat)
@@ -58,9 +59,10 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation("com.google.firebase:firebase-auth")
     implementation(platform(libs.androidx.compose.bom))
+    implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose")
     implementation("androidx.activity:activity-compose")
     debugImplementation("androidx.compose.ui:ui-tooling")
 }
