@@ -50,6 +50,9 @@ fun AppNavigation(
                 onRegisterClick = {
                     authViewModel.clearLoginError()
                     navController.navigate(Screen.Register.route)
+                },
+                onForgotPasswordClick = {
+                    authViewModel.sendPasswordReset()
                 }
             )
         }

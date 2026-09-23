@@ -1,6 +1,8 @@
 package com.example.proyectopasantia.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,16 +11,32 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Note
+import androidx.compose.material.icons.filled.Title
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -30,6 +48,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.proyectopasantia.data.Note
 import com.google.firebase.auth.FirebaseAuth
@@ -65,10 +86,15 @@ fun NotesScreen(
         ) {
             Text(
                 text = "No hay una sesión activa.",
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(16.dp))
-            OutlinedButton(onClick = onBackClick) {
+            OutlinedButton(
+                onClick = onBackClick,
+                shape = RoundedCornerShape(14.dp)
+            ) {
                 Text("Volver")
             }
         }
@@ -114,29 +140,43 @@ fun NotesScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp)
+            .statusBarsPadding()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
+        // Screen-centered title header with back button on the left
+        Box(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            contentAlignment = Alignment.Center
         ) {
             Text(
                 text = "Mis notas",
-                style = MaterialTheme.typography.headlineMedium
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
             )
 
-            TextButton(onClick = onBackClick) {
-                Text("Volver")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Volver"
+                    )
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "Organiza tus notas por categorías.",
+            text = "Organiza tus notas por categorías",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -151,9 +191,22 @@ fun NotesScreen(
                 dialogErrorMessage = null
                 showDialog = true
             },
-            modifier = Modifier.fillMaxWidth()
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
         ) {
-            Text("Nueva nota")
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.padding(horizontal = 6.dp))
+            Text(
+                text = "Nueva nota",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
         }
 
         if (errorMessage != null) {
@@ -162,6 +215,7 @@ fun NotesScreen(
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.errorContainer
                 ),
+                shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -172,7 +226,8 @@ fun NotesScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedButton(
-                        onClick = { retryTrigger++ }
+                        onClick = { retryTrigger++ },
+                        shape = RoundedCornerShape(10.dp)
                     ) {
                         Text("Reintentar")
                     }
@@ -183,14 +238,36 @@ fun NotesScreen(
         Spacer(modifier = Modifier.height(20.dp))
 
         if (notes.isEmpty() && errorMessage == null) {
-            Text(
-                text = "Todavía no tienes notas.",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Spacer(modifier = Modifier.height(48.dp))
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Note,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Todavía no tienes notas",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
         } else if (notes.isNotEmpty()) {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(
@@ -228,8 +305,12 @@ fun NotesScreen(
             onDismissRequest = {
                 if (!isSaving) showDialog = false
             },
+            shape = RoundedCornerShape(24.dp),
             title = {
-                Text(if (editingNote == null) "Nueva nota" else "Editar nota")
+                Text(
+                    text = if (editingNote == null) "Nueva nota" else "Editar nota",
+                    fontWeight = FontWeight.Bold
+                )
             },
             text = {
                 Column {
@@ -240,8 +321,12 @@ fun NotesScreen(
                             dialogErrorMessage = null
                         },
                         label = { Text("Título") },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.Title, contentDescription = null)
+                        },
                         singleLine = true,
                         enabled = !isSaving,
+                        shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -254,7 +339,11 @@ fun NotesScreen(
                             dialogErrorMessage = null
                         },
                         label = { Text("Contenido") },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.Note, contentDescription = null)
+                        },
                         enabled = !isSaving,
+                        shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -267,8 +356,12 @@ fun NotesScreen(
                             dialogErrorMessage = null
                         },
                         label = { Text("Categoría") },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.Category, contentDescription = null)
+                        },
                         singleLine = true,
                         enabled = !isSaving,
+                        shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -277,14 +370,16 @@ fun NotesScreen(
                         Text(
                             text = dialogErrorMessage!!,
                             color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center
                         )
                     }
                 }
             },
             confirmButton = {
-                TextButton(
+                Button(
                     enabled = !isSaving,
+                    shape = RoundedCornerShape(12.dp),
                     onClick = {
                         when {
                             title.isBlank() -> {
@@ -372,10 +467,11 @@ fun NotesScreen(
                     if (isSaving) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(16.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
                             strokeWidth = 2.dp
                         )
                     } else {
-                        Text("Guardar")
+                        Text("Guardar", fontWeight = FontWeight.SemiBold)
                     }
                 }
             },
@@ -398,43 +494,84 @@ fun NoteCard(
     onDelete: () -> Unit
 ) {
     Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(18.dp)
         ) {
-            Text(
-                text = note.title,
-                style = MaterialTheme.typography.titleLarge
-            )
-
-            if (note.category.isNotBlank()) {
-                Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    text = "Categoría: ${note.category}",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary
+                    text = note.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
                 )
+
+                if (note.category.isNotBlank()) {
+                    Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Text(
+                            text = note.category,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Text(
                 text = note.content,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = onEdit) {
-                    Text("Editar")
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.padding(horizontal = 2.dp))
+                    Text("Editar", fontWeight = FontWeight.SemiBold)
                 }
-                TextButton(onClick = onDelete) {
-                    Text("Eliminar")
+                Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+                TextButton(
+                    onClick = onDelete,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.padding(horizontal = 2.dp))
+                    Text("Eliminar", fontWeight = FontWeight.SemiBold)
                 }
             }
         }

@@ -11,7 +11,8 @@ data class LoginUiState(
     val email: String = "",
     val password: String = "",
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val successMessage: String? = null
 )
 
 data class RegisterUiState(
@@ -68,6 +69,41 @@ class AuthViewModel(
                     }
                 }
             }
+    }
+
+    fun sendPasswordReset() {
+        val email = _loginState.value.email.trim()
+        if (email.isBlank()) {
+            _loginState.update { it.copy(errorMessage = "Ingresa tu correo electrónico para restablecer la contraseña") }
+            return
+        }
+
+        _loginState.update { it.copy(isLoading = true, errorMessage = null, successMessage = null) }
+
+        auth.sendPasswordResetEmail(email)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    _loginState.update {
+                        it.copy(
+                            isLoading = false,
+                            successMessage = "Se ha enviado un correo de recuperación a $email"
+                        )
+                    }
+                } else {
+                    val message = task.exception?.localizedMessage
+                        ?: "No se pudo enviar el correo de recuperación"
+                    _loginState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = message
+                        )
+                    }
+                }
+            }
+    }
+
+    fun clearLoginSuccess() {
+        _loginState.update { it.copy(successMessage = null) }
     }
 
     fun onRegisterEmailChanged(email: String) {

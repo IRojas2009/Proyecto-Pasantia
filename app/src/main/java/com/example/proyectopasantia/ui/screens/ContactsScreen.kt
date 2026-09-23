@@ -1,6 +1,8 @@
 package com.example.proyectopasantia.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,14 +11,28 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -31,8 +47,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.proyectopasantia.data.Contact
 import com.google.firebase.auth.FirebaseAuth
@@ -69,10 +88,15 @@ fun ContactsScreen(
         ) {
             Text(
                 text = "No hay una sesión activa.",
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(16.dp))
-            OutlinedButton(onClick = onBackClick) {
+            OutlinedButton(
+                onClick = onBackClick,
+                shape = RoundedCornerShape(14.dp)
+            ) {
                 Text("Volver")
             }
         }
@@ -118,29 +142,43 @@ fun ContactsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp)
+            .statusBarsPadding()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
+        // Screen-centered title header with back button on the left
+        Box(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            contentAlignment = Alignment.Center
         ) {
             Text(
                 text = "Mis contactos",
-                style = MaterialTheme.typography.headlineMedium
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
             )
 
-            TextButton(onClick = onBackClick) {
-                Text("Volver")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Volver"
+                    )
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "Administra tus contactos en un solo lugar.",
+            text = "Administra tus contactos en un solo lugar",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -155,9 +193,22 @@ fun ContactsScreen(
                 dialogErrorMessage = null
                 showDialog = true
             },
-            modifier = Modifier.fillMaxWidth()
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
         ) {
-            Text("Nuevo contacto")
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.padding(horizontal = 6.dp))
+            Text(
+                text = "Nuevo contacto",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
         }
 
         if (errorMessage != null) {
@@ -166,6 +217,7 @@ fun ContactsScreen(
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.errorContainer
                 ),
+                shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -176,7 +228,8 @@ fun ContactsScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedButton(
-                        onClick = { retryTrigger++ }
+                        onClick = { retryTrigger++ },
+                        shape = RoundedCornerShape(10.dp)
                     ) {
                         Text("Reintentar")
                     }
@@ -187,14 +240,36 @@ fun ContactsScreen(
         Spacer(modifier = Modifier.height(20.dp))
 
         if (contacts.isEmpty() && errorMessage == null) {
-            Text(
-                text = "Todavía no tienes contactos.",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Spacer(modifier = Modifier.height(48.dp))
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Todavía no tienes contactos",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
         } else if (contacts.isNotEmpty()) {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(
@@ -232,8 +307,12 @@ fun ContactsScreen(
             onDismissRequest = {
                 if (!isSaving) showDialog = false
             },
+            shape = RoundedCornerShape(24.dp),
             title = {
-                Text(if (editingContact == null) "Nuevo contacto" else "Editar contacto")
+                Text(
+                    text = if (editingContact == null) "Nuevo contacto" else "Editar contacto",
+                    fontWeight = FontWeight.Bold
+                )
             },
             text = {
                 Column {
@@ -244,8 +323,12 @@ fun ContactsScreen(
                             dialogErrorMessage = null
                         },
                         label = { Text("Nombre") },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.Person, contentDescription = null)
+                        },
                         singleLine = true,
                         enabled = !isSaving,
+                        shape = RoundedCornerShape(14.dp),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Text,
                             imeAction = ImeAction.Next
@@ -262,8 +345,12 @@ fun ContactsScreen(
                             dialogErrorMessage = null
                         },
                         label = { Text("Teléfono") },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.Phone, contentDescription = null)
+                        },
                         singleLine = true,
                         enabled = !isSaving,
+                        shape = RoundedCornerShape(14.dp),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Phone,
                             imeAction = ImeAction.Next
@@ -280,8 +367,12 @@ fun ContactsScreen(
                             dialogErrorMessage = null
                         },
                         label = { Text("Correo electrónico") },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.Email, contentDescription = null)
+                        },
                         singleLine = true,
                         enabled = !isSaving,
+                        shape = RoundedCornerShape(14.dp),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Email,
                             imeAction = ImeAction.Done
@@ -294,14 +385,16 @@ fun ContactsScreen(
                         Text(
                             text = dialogErrorMessage!!,
                             color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center
                         )
                     }
                 }
             },
             confirmButton = {
-                TextButton(
+                Button(
                     enabled = !isSaving,
+                    shape = RoundedCornerShape(12.dp),
                     onClick = {
                         when {
                             name.isBlank() -> {
@@ -389,10 +482,11 @@ fun ContactsScreen(
                     if (isSaving) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(16.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
                             strokeWidth = 2.dp
                         )
                     } else {
-                        Text("Guardar")
+                        Text("Guardar", fontWeight = FontWeight.SemiBold)
                     }
                 }
             },
@@ -415,43 +509,111 @@ fun ContactCard(
     onDelete: () -> Unit
 ) {
     Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(18.dp)
         ) {
-            Text(
-                text = contact.name,
-                style = MaterialTheme.typography.titleLarge
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = contact.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
 
             if (contact.phone.isNotBlank()) {
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "Teléfono: ${contact.phone}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Phone,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+                    Text(
+                        text = contact.phone,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             if (contact.email.isNotBlank()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Correo: ${contact.email}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Email,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+                    Text(
+                        text = contact.email,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = onEdit) {
-                    Text("Editar")
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.padding(horizontal = 2.dp))
+                    Text("Editar", fontWeight = FontWeight.SemiBold)
                 }
-                TextButton(onClick = onDelete) {
-                    Text("Eliminar")
+                Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+                TextButton(
+                    onClick = onDelete,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.padding(horizontal = 2.dp))
+                    Text("Eliminar", fontWeight = FontWeight.SemiBold)
                 }
             }
         }
