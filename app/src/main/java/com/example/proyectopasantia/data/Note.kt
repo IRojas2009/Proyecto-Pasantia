@@ -4,5 +4,6 @@ data class Note(
     val id: String = "",
     val title: String = "",
     val content: String = "",
-    val category: String = ""
+    val category: String = "",
+    val timestamp: Long = System.currentTimeMillis()
 )
