@@ -8,14 +8,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val LightColors = lightColorScheme(
-    primary = Color(0xFF4F46E5), // Indigo
+    primary = Color(0xFF4F46E5), // Indigo (Base color)
     onPrimary = Color(0xFFFFFFFF),
     primaryContainer = Color(0xFFEEF2FF),
     onPrimaryContainer = Color(0xFF312E81),
-    secondary = Color(0xFF0D9488), // Teal
+    secondary = Color(0xFF6366F1), // Lighter Indigo shade (same color family)
     onSecondary = Color(0xFFFFFFFF),
-    secondaryContainer = Color(0xFFF0FDFA),
-    onSecondaryContainer = Color(0xFF134E4A),
+    secondaryContainer = Color(0xFFE0E7FF),
+    onSecondaryContainer = Color(0xFF3730A3),
     background = Color(0xFFF8FAFC),
     onBackground = Color(0xFF0F172A),
     surface = Color(0xFFFFFFFF),
@@ -29,14 +29,14 @@ private val LightColors = lightColorScheme(
 )
 
 private val DarkColors = darkColorScheme(
-    primary = Color(0xFF818CF8),
+    primary = Color(0xFF818CF8), // Indigo (Base dark shade)
     onPrimary = Color(0xFF1E1B4B),
     primaryContainer = Color(0xFF312E81),
     onPrimaryContainer = Color(0xFFEEF2FF),
-    secondary = Color(0xFF2DD4BF),
-    onSecondary = Color(0xFF042F2E),
-    secondaryContainer = Color(0xFF134E4A),
-    onSecondaryContainer = Color(0xFFF0FDFA),
+    secondary = Color(0xFFA5B4FC), // Lighter Indigo dark shade (same color family)
+    onSecondary = Color(0xFF1E1B4B),
+    secondaryContainer = Color(0xFF3730A3),
+    onSecondaryContainer = Color(0xFFE0E7FF),
     background = Color(0xFF0F172A),
     onBackground = Color(0xFFF8FAFC),
     surface = Color(0xFF1E293B),
