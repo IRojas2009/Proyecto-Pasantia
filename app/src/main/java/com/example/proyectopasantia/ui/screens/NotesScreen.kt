@@ -14,6 +14,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -31,7 +32,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
-fun NotesScreen() {
+fun NotesScreen(
+    onBackClick: () -> Unit = {}
+) {
     val auth = FirebaseAuth.getInstance()
     val firestore = FirebaseFirestore.getInstance()
     val user = auth.currentUser
@@ -55,6 +58,10 @@ fun NotesScreen() {
                 text = "No hay una sesión activa.",
                 style = MaterialTheme.typography.headlineSmall
             )
+            Spacer(modifier = Modifier.height(16.dp))
+            OutlinedButton(onClick = onBackClick) {
+                Text("Volver")
+            }
         }
         return
     }
@@ -87,10 +94,20 @@ fun NotesScreen() {
             .fillMaxSize()
             .padding(24.dp)
     ) {
-        Text(
-            text = "Mis notas",
-            style = MaterialTheme.typography.headlineMedium
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Mis notas",
+                style = MaterialTheme.typography.headlineMedium
+            )
+
+            TextButton(onClick = onBackClick) {
+                Text("Volver")
+            }
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 

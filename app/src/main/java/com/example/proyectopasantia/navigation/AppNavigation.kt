@@ -93,11 +93,19 @@ fun AppNavigation(
         }
 
         composable(Screen.Notes.route) {
-            NotesScreen()
+            NotesScreen(
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
         }
 
         composable(Screen.Contacts.route) {
-            ContactsScreen()
+            ContactsScreen(
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }

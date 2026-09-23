@@ -14,6 +14,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -31,13 +32,14 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
-fun ContactsScreen() {
+fun ContactsScreen(
+    onBackClick: () -> Unit = {}
+) {
     val auth = FirebaseAuth.getInstance()
     val firestore = FirebaseFirestore.getInstance()
     val user = auth.currentUser
 
     var contacts by remember { mutableStateOf<List<Contact>>(emptyList()) }
-
     var showDialog by remember { mutableStateOf(false) }
     var editingContact by remember { mutableStateOf<Contact?>(null) }
 
@@ -57,6 +59,10 @@ fun ContactsScreen() {
                 text = "No hay una sesión activa.",
                 style = MaterialTheme.typography.headlineSmall
             )
+            Spacer(modifier = Modifier.height(16.dp))
+            OutlinedButton(onClick = onBackClick) {
+                Text("Volver")
+            }
         }
         return
     }
@@ -67,7 +73,6 @@ fun ContactsScreen() {
             .document(user.uid)
             .collection("contacts")
             .addSnapshotListener { snapshot, error ->
-
                 if (error != null) {
                     return@addSnapshotListener
                 }
@@ -90,10 +95,20 @@ fun ContactsScreen() {
             .fillMaxSize()
             .padding(24.dp)
     ) {
-        Text(
-            text = "Mis contactos",
-            style = MaterialTheme.typography.headlineMedium
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Mis contactos",
+                style = MaterialTheme.typography.headlineMedium
+            )
+
+            TextButton(onClick = onBackClick) {
+                Text("Volver")
+            }
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -132,10 +147,8 @@ fun ContactsScreen() {
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(contacts) { contact ->
-
                     ContactCard(
                         contact = contact,
-
                         onEdit = {
                             editingContact = contact
                             name = contact.name
@@ -143,7 +156,6 @@ fun ContactsScreen() {
                             email = contact.email
                             showDialog = true
                         },
-
                         onDelete = {
                             firestore
                                 .collection("users")
@@ -160,29 +172,16 @@ fun ContactsScreen() {
 
     if (showDialog) {
         AlertDialog(
-            onDismissRequest = {
-                showDialog = false
-            },
-
+            onDismissRequest = { showDialog = false },
             title = {
-                Text(
-                    if (editingContact == null) {
-                        "Nuevo contacto"
-                    } else {
-                        "Editar contacto"
-                    }
-                )
+                Text(if (editingContact == null) "Nuevo contacto" else "Editar contacto")
             },
-
             text = {
                 Column {
-
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it },
-                        label = {
-                            Text("Nombre")
-                        },
+                        label = { Text("Nombre") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -192,9 +191,7 @@ fun ContactsScreen() {
                     OutlinedTextField(
                         value = phone,
                         onValueChange = { phone = it },
-                        label = {
-                            Text("Teléfono")
-                        },
+                        label = { Text("Teléfono") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -204,24 +201,16 @@ fun ContactsScreen() {
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
-                        label = {
-                            Text("Correo electrónico")
-                        },
+                        label = { Text("Correo electrónico") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             },
-
             confirmButton = {
                 TextButton(
                     onClick = {
-
-                        if (
-                            name.isNotBlank() &&
-                            phone.isNotBlank()
-                        ) {
-
+                        if (name.isNotBlank() && phone.isNotBlank()) {
                             val data = hashMapOf(
                                 "name" to name.trim(),
                                 "phone" to phone.trim(),
@@ -229,15 +218,12 @@ fun ContactsScreen() {
                             )
 
                             if (editingContact == null) {
-
                                 firestore
                                     .collection("users")
                                     .document(user.uid)
                                     .collection("contacts")
                                     .add(data)
-
                             } else {
-
                                 firestore
                                     .collection("users")
                                     .document(user.uid)
@@ -253,13 +239,8 @@ fun ContactsScreen() {
                     Text("Guardar")
                 }
             },
-
             dismissButton = {
-                TextButton(
-                    onClick = {
-                        showDialog = false
-                    }
-                ) {
+                TextButton(onClick = { showDialog = false }) {
                     Text("Cancelar")
                 }
             }
@@ -279,7 +260,6 @@ fun ContactCard(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-
             Text(
                 text = contact.name,
                 style = MaterialTheme.typography.titleLarge
@@ -294,7 +274,6 @@ fun ContactCard(
 
             if (contact.email.isNotBlank()) {
                 Spacer(modifier = Modifier.height(4.dp))
-
                 Text(
                     text = "Correo: ${contact.email}",
                     style = MaterialTheme.typography.bodyMedium
@@ -307,16 +286,10 @@ fun ContactCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
-
-                TextButton(
-                    onClick = onEdit
-                ) {
+                TextButton(onClick = onEdit) {
                     Text("Editar")
                 }
-
-                TextButton(
-                    onClick = onDelete
-                ) {
+                TextButton(onClick = onDelete) {
                     Text("Eliminar")
                 }
             }
