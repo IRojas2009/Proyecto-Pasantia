@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "666688747873",
+    "project_id": "proyecto-pasantia-f0252",
+    "storage_bucket": "proyecto-pasantia-f0252.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:666688747873:android:edaa192f39be2265d1ed20",
+        "android_client_info": {
+          "package_name": "com.example.proyectopasantia"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTB3_r9rYwtog4RbUA9CZpamw1DzeJuLA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

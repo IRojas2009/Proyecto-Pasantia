@@ -1,4 +1,4 @@
-package com.example.proyectopasantia.screens
+package com.example.proyectopasantia.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,7 +17,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.proyectopasantia.data.Note
@@ -26,69 +32,45 @@ import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun NotesScreen() {
-
     val auth = FirebaseAuth.getInstance()
     val firestore = FirebaseFirestore.getInstance()
-
     val user = auth.currentUser
 
-    var notes by remember {
-        mutableStateOf<List<Note>>(emptyList())
-    }
-
-    var showDialog by remember {
-        mutableStateOf(false)
-    }
-
-    var editingNote by remember {
-        mutableStateOf<Note?>(null)
-    }
-
-    var title by remember {
-        mutableStateOf("")
-    }
-
-    var content by remember {
-        mutableStateOf("")
-    }
-
-    var category by remember {
-        mutableStateOf("")
-    }
+    var notes by remember { mutableStateOf<List<Note>>(emptyList()) }
+    var showDialog by remember { mutableStateOf(false) }
+    var editingNote by remember { mutableStateOf<Note?>(null) }
+    var title by remember { mutableStateOf("") }
+    var content by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf("") }
 
     if (user == null) {
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(24.dp),
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = "No hay una sesión activa.",
                 style = MaterialTheme.typography.headlineSmall
             )
         }
-
         return
     }
 
     LaunchedEffect(user.uid) {
-
         firestore
             .collection("users")
             .document(user.uid)
             .collection("notes")
             .addSnapshotListener { snapshot, error ->
-
                 if (error != null) {
                     return@addSnapshotListener
                 }
 
                 if (snapshot != null) {
-
                     notes = snapshot.documents.map { document ->
-
                         Note(
                             id = document.id,
                             title = document.getString("title") ?: "",
@@ -105,32 +87,27 @@ fun NotesScreen() {
             .fillMaxSize()
             .padding(24.dp)
     ) {
-
         Text(
             text = "Mis notas",
             style = MaterialTheme.typography.headlineMedium
         )
 
-        Spacer(
-            modifier = Modifier.height(8.dp)
-        )
+        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Organiza tus notas por categorías."
+            text = "Organiza tus notas por categorías.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Spacer(
-            modifier = Modifier.height(20.dp)
-        )
+        Spacer(modifier = Modifier.height(20.dp))
 
         Button(
             onClick = {
-
                 editingNote = null
                 title = ""
                 content = ""
                 category = ""
-
                 showDialog = true
             },
             modifier = Modifier.fillMaxWidth()
@@ -138,40 +115,30 @@ fun NotesScreen() {
             Text("Nueva nota")
         }
 
-        Spacer(
-            modifier = Modifier.height(20.dp)
-        )
+        Spacer(modifier = Modifier.height(20.dp))
 
         if (notes.isEmpty()) {
-
             Text(
-                text = "Todavía no tienes notas."
+                text = "Todavía no tienes notas.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-
         } else {
-
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-
                 items(notes) { note ->
-
                     NoteCard(
                         note = note,
-
                         onEdit = {
-
                             editingNote = note
                             title = note.title
                             content = note.content
                             category = note.category
-
                             showDialog = true
                         },
-
                         onDelete = {
-
                             firestore
                                 .collection("users")
                                 .document(user.uid)
@@ -186,79 +153,45 @@ fun NotesScreen() {
     }
 
     if (showDialog) {
-
         AlertDialog(
-            onDismissRequest = {
-                showDialog = false
-            },
-
+            onDismissRequest = { showDialog = false },
             title = {
-                Text(
-                    if (editingNote == null) {
-                        "Nueva nota"
-                    } else {
-                        "Editar nota"
-                    }
-                )
+                Text(if (editingNote == null) "Nueva nota" else "Editar nota")
             },
-
             text = {
-
                 Column {
-
                     OutlinedTextField(
                         value = title,
-                        onValueChange = {
-                            title = it
-                        },
-                        label = {
-                            Text("Título")
-                        },
+                        onValueChange = { title = it },
+                        label = { Text("Título") },
+                        singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(
-                        modifier = Modifier.height(12.dp)
-                    )
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
                         value = content,
-                        onValueChange = {
-                            content = it
-                        },
-                        label = {
-                            Text("Contenido")
-                        },
+                        onValueChange = { content = it },
+                        label = { Text("Contenido") },
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(
-                        modifier = Modifier.height(12.dp)
-                    )
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
                         value = category,
-                        onValueChange = {
-                            category = it
-                        },
-                        label = {
-                            Text("Categoría")
-                        },
+                        onValueChange = { category = it },
+                        label = { Text("Categoría") },
+                        singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             },
-
             confirmButton = {
-
                 TextButton(
                     onClick = {
-
-                        if (
-                            title.isNotBlank() &&
-                            content.isNotBlank()
-                        ) {
-
+                        if (title.isNotBlank() && content.isNotBlank()) {
                             val data = hashMapOf(
                                 "title" to title.trim(),
                                 "content" to content.trim(),
@@ -266,15 +199,12 @@ fun NotesScreen() {
                             )
 
                             if (editingNote == null) {
-
                                 firestore
                                     .collection("users")
                                     .document(user.uid)
                                     .collection("notes")
                                     .add(data)
-
                             } else {
-
                                 firestore
                                     .collection("users")
                                     .document(user.uid)
@@ -290,14 +220,8 @@ fun NotesScreen() {
                     Text("Guardar")
                 }
             },
-
             dismissButton = {
-
-                TextButton(
-                    onClick = {
-                        showDialog = false
-                    }
-                ) {
+                TextButton(onClick = { showDialog = false }) {
                     Text("Cancelar")
                 }
             }
@@ -311,58 +235,43 @@ fun NoteCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
-
     Card(
         modifier = Modifier.fillMaxWidth()
     ) {
-
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-
             Text(
                 text = note.title,
                 style = MaterialTheme.typography.titleLarge
             )
 
             if (note.category.isNotBlank()) {
-
-                Spacer(
-                    modifier = Modifier.height(4.dp)
-                )
-
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "Categoría: ${note.category}",
-                    style = MaterialTheme.typography.labelLarge
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
 
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = note.content
+                text = note.content,
+                style = MaterialTheme.typography.bodyMedium
             )
 
-            Spacer(
-                modifier = Modifier.height(12.dp)
-            )
+            Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
-
-                TextButton(
-                    onClick = onEdit
-                ) {
+                TextButton(onClick = onEdit) {
                     Text("Editar")
                 }
-
-                TextButton(
-                    onClick = onDelete
-                ) {
+                TextButton(onClick = onDelete) {
                     Text("Eliminar")
                 }
             }
