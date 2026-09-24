@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.AlertDialog
@@ -38,6 +39,10 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -66,6 +71,22 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 
+data class Country(
+    val name: String,
+    val code: String,
+    val length: Int
+)
+
+val countries = listOf(
+    Country("Costa Rica", "+506", 8),
+    Country("Estados Unidos", "+1", 10),
+    Country("México", "+52", 10),
+    Country("España", "+34", 9),
+    Country("Colombia", "+57", 10),
+    Country("Personalizado", "+", 0)
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContactsScreen(
     onBackClick: () -> Unit = {}
@@ -79,9 +100,13 @@ fun ContactsScreen(
     var editingContact by remember { mutableStateOf<Contact?>(null) }
 
     var name by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
+    var phoneDigits by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var isFavorite by remember { mutableStateOf(false) }
+    var selectedCountry by remember { mutableStateOf(countries[0]) }
+    var customCountryCode by remember { mutableStateOf("+") }
+    var countryExpanded by remember { mutableStateOf(false) }
+
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var dialogErrorMessage by remember { mutableStateOf<String?>(null) }
     var isSaving by remember { mutableStateOf(false) }
@@ -196,9 +221,11 @@ fun ContactsScreen(
             onClick = {
                 editingContact = null
                 name = ""
-                phone = ""
+                phoneDigits = ""
                 email = ""
                 isFavorite = false
+                selectedCountry = countries[0]
+                customCountryCode = "+"
                 errorMessage = null
                 dialogErrorMessage = null
                 showDialog = true
@@ -291,9 +318,25 @@ fun ContactsScreen(
                         onEdit = {
                             editingContact = contact
                             name = contact.name
-                            phone = contact.phone
                             email = contact.email
                             isFavorite = contact.isFavorite
+
+                            val matchedCountry = countries.find { it.code != "+" && contact.phone.startsWith(it.code) }
+                            if (matchedCountry != null) {
+                                selectedCountry = matchedCountry
+                                phoneDigits = contact.phone.removePrefix(matchedCountry.code).trim().filter { it.isDigit() }
+                            } else if (contact.phone.startsWith("+")) {
+                                selectedCountry = countries.last() // Personalizado
+                                val parts = contact.phone.split(" ", limit = 2)
+                                if (parts.isNotEmpty()) {
+                                    customCountryCode = parts[0]
+                                    phoneDigits = if (parts.size > 1) parts[1].filter { it.isDigit() } else ""
+                                }
+                            } else {
+                                selectedCountry = countries[0]
+                                phoneDigits = contact.phone.filter { it.isDigit() }
+                            }
+
                             errorMessage = null
                             dialogErrorMessage = null
                             showDialog = true
@@ -368,15 +411,78 @@ fun ContactsScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
+                    // Country Dropdown
+                    ExposedDropdownMenuBox(
+                        expanded = countryExpanded,
+                        onExpandedChange = { countryExpanded = !countryExpanded },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = if (selectedCountry.code == "+") "Personalizado" else "${selectedCountry.name} (${selectedCountry.code})",
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("País / Código") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = countryExpanded) },
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor()
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = countryExpanded,
+                            onDismissRequest = { countryExpanded = false }
+                        ) {
+                            countries.forEach { country ->
+                                DropdownMenuItem(
+                                    text = { Text(if (country.code == "+") "Personalizado (+...)" else "${country.name} (${country.code})") },
+                                    onClick = {
+                                        selectedCountry = country
+                                        countryExpanded = false
+                                        dialogErrorMessage = null
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    if (selectedCountry.code == "+") {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = customCountryCode,
+                            onValueChange = {
+                                customCountryCode = if (it.startsWith("+")) it else "+$it"
+                                dialogErrorMessage = null
+                            },
+                            label = { Text("Código de país personalizado (ej. +54)") },
+                            singleLine = true,
+                            enabled = !isSaving,
+                            shape = RoundedCornerShape(14.dp),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Phone,
+                                imeAction = ImeAction.Next
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
                     OutlinedTextField(
-                        value = phone,
+                        value = phoneDigits,
                         onValueChange = {
-                            phone = it
+                            phoneDigits = it.filter { char -> char.isDigit() }
                             dialogErrorMessage = null
                         },
-                        label = { Text("Teléfono") },
+                        label = { Text(if (selectedCountry.code == "+") "Número de teléfono" else "Teléfono (${selectedCountry.length} dígitos)") },
                         leadingIcon = {
-                            Icon(imageVector = Icons.Default.Phone, contentDescription = null)
+                            Text(
+                                text = if (selectedCountry.code == "+") (if (customCountryCode.isBlank()) "+" else customCountryCode) else selectedCountry.code,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(start = 12.dp, end = 4.dp)
+                            )
                         },
                         singleLine = true,
                         enabled = !isSaving,
@@ -454,20 +560,33 @@ fun ContactsScreen(
                     enabled = !isSaving,
                     shape = RoundedCornerShape(12.dp),
                     onClick = {
+                        val cleanDigits = phoneDigits.filter { it.isDigit() }
                         when {
                             name.isBlank() -> {
                                 dialogErrorMessage = "El nombre es obligatorio"
                             }
-                            phone.isBlank() && email.isBlank() -> {
+                            phoneDigits.isNotBlank() && selectedCountry.code != "+" && cleanDigits.length != selectedCountry.length -> {
+                                dialogErrorMessage = "Para ${selectedCountry.name} (${selectedCountry.code}), el número debe tener exactamente ${selectedCountry.length} dígitos (ingresaste ${cleanDigits.length})."
+                            }
+                            phoneDigits.isNotBlank() && selectedCountry.code == "+" && (customCountryCode.length < 2 || cleanDigits.length < 4) -> {
+                                dialogErrorMessage = "Ingresa un código de país válido (ej. +54) y un número de teléfono."
+                            }
+                            phoneDigits.isBlank() && email.isBlank() -> {
                                 dialogErrorMessage = "Ingresa un teléfono o correo electrónico"
                             }
                             else -> {
                                 dialogErrorMessage = null
                                 isSaving = true
+                                val finalPrefix = if (selectedCountry.code == "+") {
+                                    if (customCountryCode.startsWith("+")) customCountryCode else "+$customCountryCode"
+                                } else {
+                                    selectedCountry.code
+                                }
+                                val finalPhone = if (phoneDigits.isBlank()) "" else "$finalPrefix $cleanDigits"
                                 val currentTimestamp = System.currentTimeMillis()
                                 val data = hashMapOf(
                                     "name" to name.trim(),
-                                    "phone" to phone.trim(),
+                                    "phone" to finalPhone,
                                     "email" to email.trim(),
                                     "timestamp" to currentTimestamp,
                                     "isFavorite" to isFavorite
@@ -483,7 +602,7 @@ fun ContactsScreen(
                                     val newContact = Contact(
                                         id = docRef.id,
                                         name = name.trim(),
-                                        phone = phone.trim(),
+                                        phone = finalPhone,
                                         email = email.trim(),
                                         timestamp = currentTimestamp,
                                         isFavorite = isFavorite
@@ -509,7 +628,7 @@ fun ContactsScreen(
                                 } else {
                                     val updatedContact = editingContact!!.copy(
                                         name = name.trim(),
-                                        phone = phone.trim(),
+                                        phone = finalPhone,
                                         email = email.trim(),
                                         timestamp = currentTimestamp,
                                         isFavorite = isFavorite
@@ -643,19 +762,38 @@ fun ContactCard(
                         )
                     }
 
-                    IconButton(
-                        onClick = {
-                            val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${contact.phone}"))
-                            context.startActivity(intent)
-                        },
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Phone,
-                            contentDescription = "Llamar",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:${contact.phone}"))
+                                context.startActivity(intent)
+                            },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Sms,
+                                contentDescription = "Enviar SMS",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(4.dp))
+
+                        IconButton(
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${contact.phone}"))
+                                context.startActivity(intent)
+                            },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Phone,
+                                contentDescription = "Llamar",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                 }
             }
