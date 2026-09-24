@@ -43,11 +43,11 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.proyectopasantia.viewmodel.RegisterUiState
+import com.example.proyectopasantia.viewmodel.EstadoRegistro
 
 @Composable
-fun RegisterScreen(
-    state: RegisterUiState,
+fun PantallaRegistro(
+    state: EstadoRegistro,
     onEmailChanged: (String) -> Unit,
     onPasswordChanged: (String) -> Unit,
     onConfirmPasswordChanged: (String) -> Unit,

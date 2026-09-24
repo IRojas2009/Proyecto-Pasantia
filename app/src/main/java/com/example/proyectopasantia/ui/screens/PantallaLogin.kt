@@ -44,11 +44,11 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.proyectopasantia.viewmodel.LoginUiState
+import com.example.proyectopasantia.viewmodel.EstadoLogin
 
 @Composable
-fun LoginScreen(
-    state: LoginUiState,
+fun PantallaLogin(
+    state: EstadoLogin,
     onEmailChanged: (String) -> Unit,
     onPasswordChanged: (String) -> Unit,
     onLoginClick: () -> Unit,

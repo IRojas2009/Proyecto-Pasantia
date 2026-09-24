@@ -1,7 +1,5 @@
 package com.example.proyectopasantia.ui.screens
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,14 +22,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Sms
+import androidx.compose.material.icons.filled.Note
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.filled.Title
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -39,15 +36,12 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -60,53 +54,29 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.proyectopasantia.data.Contact
+import com.example.proyectopasantia.data.Nota
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 
-data class Country(
-    val name: String,
-    val code: String,
-    val length: Int
-)
-
-val countries = listOf(
-    Country("Costa Rica", "+506", 8),
-    Country("Estados Unidos", "+1", 10),
-    Country("México", "+52", 10),
-    Country("España", "+34", 9),
-    Country("Colombia", "+57", 10),
-    Country("Personalizado", "+", 0)
-)
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ContactsScreen(
+fun PantallaNotas(
     onBackClick: () -> Unit = {}
 ) {
     val auth = FirebaseAuth.getInstance()
     val firestore = FirebaseFirestore.getInstance()
     val user = auth.currentUser
 
-    var contacts by remember { mutableStateOf<List<Contact>>(emptyList()) }
+    var notes by remember { mutableStateOf<List<Nota>>(emptyList()) }
     var showDialog by remember { mutableStateOf(false) }
-    var editingContact by remember { mutableStateOf<Contact?>(null) }
-
-    var name by remember { mutableStateOf("") }
-    var phoneDigits by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
+    var editingNote by remember { mutableStateOf<Nota?>(null) }
+    var title by remember { mutableStateOf("") }
+    var content by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf("") }
     var isFavorite by remember { mutableStateOf(false) }
-    var selectedCountry by remember { mutableStateOf(countries[0]) }
-    var customCountryCode by remember { mutableStateOf("+") }
-    var countryExpanded by remember { mutableStateOf(false) }
-
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var dialogErrorMessage by remember { mutableStateOf<String?>(null) }
     var isSaving by remember { mutableStateOf(false) }
@@ -142,30 +112,30 @@ fun ContactsScreen(
         val listener = firestore
             .collection("users")
             .document(user.uid)
-            .collection("contacts")
+            .collection("notes")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     errorMessage = if (error.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
                         "Permisos insuficientes en Firebase Firestore. Configura las reglas de seguridad en la consola de Firebase."
                     } else {
-                        "Error al cargar contactos: ${error.localizedMessage}"
+                        "Error al cargar notas: ${error.localizedMessage}"
                     }
                     return@addSnapshotListener
                 }
 
                 if (snapshot != null) {
                     errorMessage = null
-                    val fetchedContacts = snapshot.documents.map { document ->
-                        Contact(
+                    val fetchedNotes = snapshot.documents.map { document ->
+                        Nota(
                             id = document.id,
-                            name = document.getString("name") ?: "",
-                            phone = document.getString("phone") ?: "",
-                            email = document.getString("email") ?: "",
+                            title = document.getString("title") ?: "",
+                            content = document.getString("content") ?: "",
+                            category = document.getString("category") ?: "",
                             timestamp = document.getLong("timestamp") ?: 0L,
                             isFavorite = document.getBoolean("isFavorite") ?: false
                         )
-                    }.sortedWith(compareByDescending<Contact> { it.isFavorite }.thenByDescending { it.timestamp })
-                    contacts = fetchedContacts
+                    }.sortedWith(compareByDescending<Nota> { it.isFavorite }.thenByDescending { it.timestamp })
+                    notes = fetchedNotes
                 }
             }
 
@@ -186,7 +156,7 @@ fun ContactsScreen(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Mis contactos",
+                text = "Mis notas",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
@@ -209,7 +179,7 @@ fun ContactsScreen(
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "Administra tus contactos en un solo lugar",
+            text = "Organiza tus notas por categorías",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -219,13 +189,11 @@ fun ContactsScreen(
 
         Button(
             onClick = {
-                editingContact = null
-                name = ""
-                phoneDigits = ""
-                email = ""
+                editingNote = null
+                title = ""
+                content = ""
+                category = ""
                 isFavorite = false
-                selectedCountry = countries[0]
-                customCountryCode = "+"
                 errorMessage = null
                 dialogErrorMessage = null
                 showDialog = true
@@ -242,7 +210,7 @@ fun ContactsScreen(
             )
             Spacer(modifier = Modifier.padding(horizontal = 6.dp))
             Text(
-                text = "Nuevo contacto",
+                text = "Nueva nota",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -276,7 +244,7 @@ fun ContactsScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        if (contacts.isEmpty() && errorMessage == null) {
+        if (notes.isEmpty() && errorMessage == null) {
             Spacer(modifier = Modifier.height(48.dp))
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -289,7 +257,7 @@ fun ContactsScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Person,
+                        imageVector = Icons.Default.Note,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(32.dp)
@@ -297,76 +265,60 @@ fun ContactsScreen(
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Todavía no tienes contactos",
+                    text = "Todavía no tienes notas",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
             }
-        } else if (contacts.isNotEmpty()) {
+        } else if (notes.isNotEmpty()) {
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(
-                    items = contacts,
-                    key = { contact -> contact.id }
-                ) { contact ->
-                    ContactCard(
-                        contact = contact,
+                    items = notes,
+                    key = { note -> note.id }
+                ) { note ->
+                    TarjetaNota(
+                        nota = note,
                         onEdit = {
-                            editingContact = contact
-                            name = contact.name
-                            email = contact.email
-                            isFavorite = contact.isFavorite
-
-                            val matchedCountry = countries.find { it.code != "+" && contact.phone.startsWith(it.code) }
-                            if (matchedCountry != null) {
-                                selectedCountry = matchedCountry
-                                phoneDigits = contact.phone.removePrefix(matchedCountry.code).trim().filter { it.isDigit() }
-                            } else if (contact.phone.startsWith("+")) {
-                                selectedCountry = countries.last() // Personalizado
-                                val parts = contact.phone.split(" ", limit = 2)
-                                if (parts.isNotEmpty()) {
-                                    customCountryCode = parts[0]
-                                    phoneDigits = if (parts.size > 1) parts[1].filter { it.isDigit() } else ""
-                                }
-                            } else {
-                                selectedCountry = countries[0]
-                                phoneDigits = contact.phone.filter { it.isDigit() }
-                            }
-
+                            editingNote = note
+                            title = note.title
+                            content = note.content
+                            category = note.category
+                            isFavorite = note.isFavorite
                             errorMessage = null
                             dialogErrorMessage = null
                             showDialog = true
                         },
                         onToggleFavorite = {
-                            val newFavorite = !contact.isFavorite
-                            contacts = contacts.map { if (it.id == contact.id) it.copy(isFavorite = newFavorite) else it }
-                                .sortedWith(compareByDescending<Contact> { it.isFavorite }.thenByDescending { it.timestamp })
-                            
+                            val newFavorite = !note.isFavorite
+                            notes = notes.map { if (it.id == note.id) it.copy(isFavorite = newFavorite) else it }
+                                .sortedWith(compareByDescending<Nota> { it.isFavorite }.thenByDescending { it.timestamp })
+
                             val data = hashMapOf(
-                                "name" to contact.name,
-                                "phone" to contact.phone,
-                                "email" to contact.email,
-                                "timestamp" to contact.timestamp,
+                                "title" to note.title,
+                                "content" to note.content,
+                                "category" to note.category,
+                                "timestamp" to note.timestamp,
                                 "isFavorite" to newFavorite
                             )
                             firestore
                                 .collection("users")
                                 .document(user.uid)
-                                .collection("contacts")
-                                .document(contact.id)
+                                .collection("notes")
+                                .document(note.id)
                                 .set(data)
                         },
                         onDelete = {
-                            contacts = contacts.filter { it.id != contact.id }
+                            notes = notes.filter { it.id != note.id }
                             firestore
                                 .collection("users")
                                 .document(user.uid)
-                                .collection("contacts")
-                                .document(contact.id)
+                                .collection("notes")
+                                .document(note.id)
                                 .delete()
                         }
                     )
@@ -383,136 +335,60 @@ fun ContactsScreen(
             shape = RoundedCornerShape(24.dp),
             title = {
                 Text(
-                    text = if (editingContact == null) "Nuevo contacto" else "Editar contacto",
+                    text = if (editingNote == null) "Nueva nota" else "Editar nota",
                     fontWeight = FontWeight.Bold
                 )
             },
             text = {
                 Column {
                     OutlinedTextField(
-                        value = name,
+                        value = title,
                         onValueChange = {
-                            name = it
+                            title = it
                             dialogErrorMessage = null
                         },
-                        label = { Text("Nombre") },
+                        label = { Text("Título") },
                         leadingIcon = {
-                            Icon(imageVector = Icons.Default.Person, contentDescription = null)
+                            Icon(imageVector = Icons.Default.Title, contentDescription = null)
                         },
                         singleLine = true,
                         enabled = !isSaving,
                         shape = RoundedCornerShape(14.dp),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Text,
-                            imeAction = ImeAction.Next
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Country Dropdown
-                    ExposedDropdownMenuBox(
-                        expanded = countryExpanded,
-                        onExpandedChange = { countryExpanded = !countryExpanded },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        OutlinedTextField(
-                            value = if (selectedCountry.code == "+") "Personalizado" else "${selectedCountry.name} (${selectedCountry.code})",
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("País / Código") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = countryExpanded) },
-                            shape = RoundedCornerShape(14.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor()
-                        )
-
-                        ExposedDropdownMenu(
-                            expanded = countryExpanded,
-                            onDismissRequest = { countryExpanded = false }
-                        ) {
-                            countries.forEach { country ->
-                                DropdownMenuItem(
-                                    text = { Text(if (country.code == "+") "Personalizado (+...)" else "${country.name} (${country.code})") },
-                                    onClick = {
-                                        selectedCountry = country
-                                        countryExpanded = false
-                                        dialogErrorMessage = null
-                                    }
-                                )
-                            }
-                        }
-                    }
-
-                    if (selectedCountry.code == "+") {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        OutlinedTextField(
-                            value = customCountryCode,
-                            onValueChange = {
-                                customCountryCode = if (it.startsWith("+")) it else "+$it"
-                                dialogErrorMessage = null
-                            },
-                            label = { Text("Código de país personalizado (ej. +54)") },
-                            singleLine = true,
-                            enabled = !isSaving,
-                            shape = RoundedCornerShape(14.dp),
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Phone,
-                                imeAction = ImeAction.Next
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    OutlinedTextField(
-                        value = phoneDigits,
-                        onValueChange = {
-                            phoneDigits = it.filter { char -> char.isDigit() }
-                            dialogErrorMessage = null
-                        },
-                        label = { Text(if (selectedCountry.code == "+") "Número de teléfono" else "Teléfono (${selectedCountry.length} dígitos)") },
-                        leadingIcon = {
-                            Text(
-                                text = if (selectedCountry.code == "+") (if (customCountryCode.isBlank()) "+" else customCountryCode) else selectedCountry.code,
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(start = 12.dp, end = 4.dp)
-                            )
-                        },
-                        singleLine = true,
-                        enabled = !isSaving,
-                        shape = RoundedCornerShape(14.dp),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Phone,
-                            imeAction = ImeAction.Next
-                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
-                        value = email,
+                        value = content,
                         onValueChange = {
-                            email = it
+                            content = it
                             dialogErrorMessage = null
                         },
-                        label = { Text("Correo electrónico") },
+                        label = { Text("Contenido") },
                         leadingIcon = {
-                            Icon(imageVector = Icons.Default.Email, contentDescription = null)
+                            Icon(imageVector = Icons.Default.Note, contentDescription = null)
+                        },
+                        enabled = !isSaving,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedTextField(
+                        value = category,
+                        onValueChange = {
+                            category = it
+                            dialogErrorMessage = null
+                        },
+                        label = { Text("Categoría") },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.Category, contentDescription = null)
                         },
                         singleLine = true,
                         enabled = !isSaving,
                         shape = RoundedCornerShape(14.dp),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Email,
-                            imeAction = ImeAction.Done
-                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -560,56 +436,43 @@ fun ContactsScreen(
                     enabled = !isSaving,
                     shape = RoundedCornerShape(12.dp),
                     onClick = {
-                        val cleanDigits = phoneDigits.filter { it.isDigit() }
                         when {
-                            name.isBlank() -> {
-                                dialogErrorMessage = "El nombre es obligatorio"
+                            title.isBlank() -> {
+                                dialogErrorMessage = "El título es obligatorio"
                             }
-                            phoneDigits.isNotBlank() && selectedCountry.code != "+" && cleanDigits.length != selectedCountry.length -> {
-                                dialogErrorMessage = "Para ${selectedCountry.name} (${selectedCountry.code}), el número debe tener exactamente ${selectedCountry.length} dígitos (ingresaste ${cleanDigits.length})."
-                            }
-                            phoneDigits.isNotBlank() && selectedCountry.code == "+" && (customCountryCode.length < 2 || cleanDigits.length < 4) -> {
-                                dialogErrorMessage = "Ingresa un código de país válido (ej. +54) y un número de teléfono."
-                            }
-                            phoneDigits.isBlank() && email.isBlank() -> {
-                                dialogErrorMessage = "Ingresa un teléfono o correo electrónico"
+                            content.isBlank() -> {
+                                dialogErrorMessage = "El contenido es obligatorio"
                             }
                             else -> {
                                 dialogErrorMessage = null
                                 isSaving = true
-                                val finalPrefix = if (selectedCountry.code == "+") {
-                                    if (customCountryCode.startsWith("+")) customCountryCode else "+$customCountryCode"
-                                } else {
-                                    selectedCountry.code
-                                }
-                                val finalPhone = if (phoneDigits.isBlank()) "" else "$finalPrefix $cleanDigits"
                                 val currentTimestamp = System.currentTimeMillis()
                                 val data = hashMapOf(
-                                    "name" to name.trim(),
-                                    "phone" to finalPhone,
-                                    "email" to email.trim(),
+                                    "title" to title.trim(),
+                                    "content" to content.trim(),
+                                    "category" to category.trim(),
                                     "timestamp" to currentTimestamp,
                                     "isFavorite" to isFavorite
                                 )
 
-                                if (editingContact == null) {
+                                if (editingNote == null) {
                                     val docRef = firestore
                                         .collection("users")
                                         .document(user.uid)
-                                        .collection("contacts")
+                                        .collection("notes")
                                         .document()
 
-                                    val newContact = Contact(
+                                    val newNote = Nota(
                                         id = docRef.id,
-                                        name = name.trim(),
-                                        phone = finalPhone,
-                                        email = email.trim(),
+                                        title = title.trim(),
+                                        content = content.trim(),
+                                        category = category.trim(),
                                         timestamp = currentTimestamp,
                                         isFavorite = isFavorite
                                     )
 
-                                    contacts = (listOf(newContact) + contacts.filter { it.id != newContact.id })
-                                        .sortedWith(compareByDescending<Contact> { it.isFavorite }.thenByDescending { it.timestamp })
+                                    notes = (listOf(newNote) + notes.filter { it.id != newNote.id })
+                                        .sortedWith(compareByDescending<Nota> { it.isFavorite }.thenByDescending { it.timestamp })
 
                                     docRef.set(data)
                                         .addOnSuccessListener {
@@ -621,27 +484,27 @@ fun ContactsScreen(
                                             val msg = if ((e as? FirebaseFirestoreException)?.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
                                                 "Permisos insuficientes en Firestore. Revisa las reglas de seguridad."
                                             } else {
-                                                e.localizedMessage ?: "Error al guardar contacto"
+                                                e.localizedMessage ?: "Error al guardar nota"
                                             }
                                             dialogErrorMessage = msg
                                         }
                                 } else {
-                                    val updatedContact = editingContact!!.copy(
-                                        name = name.trim(),
-                                        phone = finalPhone,
-                                        email = email.trim(),
+                                    val updatedNote = editingNote!!.copy(
+                                        title = title.trim(),
+                                        content = content.trim(),
+                                        category = category.trim(),
                                         timestamp = currentTimestamp,
                                         isFavorite = isFavorite
                                     )
 
-                                    contacts = contacts.map { if (it.id == updatedContact.id) updatedContact else it }
-                                        .sortedWith(compareByDescending<Contact> { it.isFavorite }.thenByDescending { it.timestamp })
+                                    notes = notes.map { if (it.id == updatedNote.id) updatedNote else it }
+                                        .sortedWith(compareByDescending<Nota> { it.isFavorite }.thenByDescending { it.timestamp })
 
                                     firestore
                                         .collection("users")
                                         .document(user.uid)
-                                        .collection("contacts")
-                                        .document(updatedContact.id)
+                                        .collection("notes")
+                                        .document(updatedNote.id)
                                         .set(data)
                                         .addOnSuccessListener {
                                             isSaving = false
@@ -652,7 +515,7 @@ fun ContactsScreen(
                                             val msg = if ((e as? FirebaseFirestoreException)?.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
                                                 "Permisos insuficientes en Firestore. Revisa las reglas de seguridad."
                                             } else {
-                                                e.localizedMessage ?: "Error al actualizar contacto"
+                                                e.localizedMessage ?: "Error al actualizar nota"
                                             }
                                             dialogErrorMessage = msg
                                         }
@@ -685,14 +548,12 @@ fun ContactsScreen(
 }
 
 @Composable
-fun ContactCard(
-    contact: Contact,
+fun TarjetaNota(
+    nota: Nota,
     onEdit: () -> Unit,
     onToggleFavorite: () -> Unit,
     onDelete: () -> Unit
 ) {
-    val context = LocalContext.current
-
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
@@ -706,115 +567,49 @@ fun ContactCard(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
+                Text(
+                    text = nota.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+
+                if (nota.category.isNotBlank()) {
+                    Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Text(
+                            text = nota.category,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.padding(horizontal = 8.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = contact.name,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
+
                 IconButton(onClick = onToggleFavorite) {
                     Icon(
-                        imageVector = if (contact.isFavorite) Icons.Default.Star else Icons.Default.StarBorder,
+                        imageVector = if (nota.isFavorite) Icons.Default.Star else Icons.Default.StarBorder,
                         contentDescription = "Favorito",
-                        tint = if (contact.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = if (nota.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            if (contact.phone.isNotBlank()) {
-                Spacer(modifier = Modifier.height(10.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Phone,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.padding(horizontal = 4.dp))
-                        Text(
-                            text = contact.phone,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+            Spacer(modifier = Modifier.height(10.dp))
 
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(
-                            onClick = {
-                                val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:${contact.phone}"))
-                                context.startActivity(intent)
-                            },
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Sms,
-                                contentDescription = "Enviar SMS",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(4.dp))
-
-                        IconButton(
-                            onClick = {
-                                val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${contact.phone}"))
-                                context.startActivity(intent)
-                            },
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Phone,
-                                contentDescription = "Llamar",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-                }
-            }
-
-            if (contact.email.isNotBlank()) {
-                Spacer(modifier = Modifier.height(6.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Email,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.padding(horizontal = 4.dp))
-                    Text(
-                        text = contact.email,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+            Text(
+                text = nota.content,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
             Spacer(modifier = Modifier.height(14.dp))
 

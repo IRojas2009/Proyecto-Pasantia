@@ -1,10 +1,10 @@
 package com.example.proyectopasantia.data
 
-data class Contact(
+data class Nota(
     val id: String = "",
-    val name: String = "",
-    val phone: String = "",
-    val email: String = "",
+    val title: String = "",
+    val content: String = "",
+    val category: String = "",
     val timestamp: Long = System.currentTimeMillis(),
     val isFavorite: Boolean = false
 )

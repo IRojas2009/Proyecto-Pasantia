@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-data class LoginUiState(
+data class EstadoLogin(
     val email: String = "",
     val password: String = "",
     val isLoading: Boolean = false,
@@ -15,7 +15,7 @@ data class LoginUiState(
     val successMessage: String? = null
 )
 
-data class RegisterUiState(
+data class EstadoRegistro(
     val email: String = "",
     val password: String = "",
     val confirmPassword: String = "",
@@ -23,15 +23,15 @@ data class RegisterUiState(
     val errorMessage: String? = null
 )
 
-class AuthViewModel(
+class AutenticacionViewModel(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 ) : ViewModel() {
 
-    private val _loginState = MutableStateFlow(LoginUiState())
-    val loginState: StateFlow<LoginUiState> = _loginState.asStateFlow()
+    private val _loginState = MutableStateFlow(EstadoLogin())
+    val loginState: StateFlow<EstadoLogin> = _loginState.asStateFlow()
 
-    private val _registerState = MutableStateFlow(RegisterUiState())
-    val registerState: StateFlow<RegisterUiState> = _registerState.asStateFlow()
+    private val _registerState = MutableStateFlow(EstadoRegistro())
+    val registerState: StateFlow<EstadoRegistro> = _registerState.asStateFlow()
 
     val isUserLoggedIn: Boolean
         get() = auth.currentUser != null
@@ -56,7 +56,7 @@ class AuthViewModel(
         auth.signInWithEmailAndPassword(state.email.trim(), state.password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    _loginState.update { LoginUiState() }
+                    _loginState.update { EstadoLogin() }
                     onSuccess()
                 } else {
                     val message = task.exception?.localizedMessage
@@ -136,7 +136,7 @@ class AuthViewModel(
                 auth.createUserWithEmailAndPassword(state.email.trim(), state.password)
                     .addOnCompleteListener { task ->
                         if (task.isSuccessful) {
-                            _registerState.update { RegisterUiState() }
+                            _registerState.update { EstadoRegistro() }
                             auth.signOut()
                             onSuccess()
                         } else {
@@ -156,8 +156,8 @@ class AuthViewModel(
 
     fun logout(onSuccess: () -> Unit) {
         auth.signOut()
-        _loginState.value = LoginUiState()
-        _registerState.value = RegisterUiState()
+        _loginState.value = EstadoLogin()
+        _registerState.value = EstadoRegistro()
         onSuccess()
     }
 
