@@ -1,6 +1,7 @@
 package com.example.proyectopasantia.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -24,12 +26,15 @@ import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Note
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -71,6 +76,7 @@ fun NotesScreen(
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("") }
+    var isFavorite by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var dialogErrorMessage by remember { mutableStateOf<String?>(null) }
     var isSaving by remember { mutableStateOf(false) }
@@ -125,9 +131,10 @@ fun NotesScreen(
                             title = document.getString("title") ?: "",
                             content = document.getString("content") ?: "",
                             category = document.getString("category") ?: "",
-                            timestamp = document.getLong("timestamp") ?: 0L
+                            timestamp = document.getLong("timestamp") ?: 0L,
+                            isFavorite = document.getBoolean("isFavorite") ?: false
                         )
-                    }.sortedByDescending { it.timestamp }
+                    }.sortedWith(compareByDescending<Note> { it.isFavorite }.thenByDescending { it.timestamp })
                     notes = fetchedNotes
                 }
             }
@@ -144,7 +151,6 @@ fun NotesScreen(
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Screen-centered title header with back button on the left
         Box(
             modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.Center
@@ -187,6 +193,7 @@ fun NotesScreen(
                 title = ""
                 content = ""
                 category = ""
+                isFavorite = false
                 errorMessage = null
                 dialogErrorMessage = null
                 showDialog = true
@@ -281,9 +288,29 @@ fun NotesScreen(
                             title = note.title
                             content = note.content
                             category = note.category
+                            isFavorite = note.isFavorite
                             errorMessage = null
                             dialogErrorMessage = null
                             showDialog = true
+                        },
+                        onToggleFavorite = {
+                            val newFavorite = !note.isFavorite
+                            notes = notes.map { if (it.id == note.id) it.copy(isFavorite = newFavorite) else it }
+                                .sortedWith(compareByDescending<Note> { it.isFavorite }.thenByDescending { it.timestamp })
+
+                            val data = hashMapOf(
+                                "title" to note.title,
+                                "content" to note.content,
+                                "category" to note.category,
+                                "timestamp" to note.timestamp,
+                                "isFavorite" to newFavorite
+                            )
+                            firestore
+                                .collection("users")
+                                .document(user.uid)
+                                .collection("notes")
+                                .document(note.id)
+                                .set(data)
                         },
                         onDelete = {
                             notes = notes.filter { it.id != note.id }
@@ -365,6 +392,34 @@ fun NotesScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { isFavorite = !isFavorite }
+                            .padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = isFavorite,
+                            onCheckedChange = { isFavorite = it }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Default.Star else Icons.Default.StarBorder,
+                            contentDescription = null,
+                            tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Marcar como favorito",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
                     if (dialogErrorMessage != null) {
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
@@ -396,7 +451,8 @@ fun NotesScreen(
                                     "title" to title.trim(),
                                     "content" to content.trim(),
                                     "category" to category.trim(),
-                                    "timestamp" to currentTimestamp
+                                    "timestamp" to currentTimestamp,
+                                    "isFavorite" to isFavorite
                                 )
 
                                 if (editingNote == null) {
@@ -411,10 +467,12 @@ fun NotesScreen(
                                         title = title.trim(),
                                         content = content.trim(),
                                         category = category.trim(),
-                                        timestamp = currentTimestamp
+                                        timestamp = currentTimestamp,
+                                        isFavorite = isFavorite
                                     )
 
-                                    notes = listOf(newNote) + notes.filter { it.id != newNote.id }
+                                    notes = (listOf(newNote) + notes.filter { it.id != newNote.id })
+                                        .sortedWith(compareByDescending<Note> { it.isFavorite }.thenByDescending { it.timestamp })
 
                                     docRef.set(data)
                                         .addOnSuccessListener {
@@ -435,10 +493,12 @@ fun NotesScreen(
                                         title = title.trim(),
                                         content = content.trim(),
                                         category = category.trim(),
-                                        timestamp = currentTimestamp
+                                        timestamp = currentTimestamp,
+                                        isFavorite = isFavorite
                                     )
 
                                     notes = notes.map { if (it.id == updatedNote.id) updatedNote else it }
+                                        .sortedWith(compareByDescending<Note> { it.isFavorite }.thenByDescending { it.timestamp })
 
                                     firestore
                                         .collection("users")
@@ -491,6 +551,7 @@ fun NotesScreen(
 fun NoteCard(
     note: Note,
     onEdit: () -> Unit,
+    onToggleFavorite: () -> Unit,
     onDelete: () -> Unit
 ) {
     Card(
@@ -531,6 +592,14 @@ fun NoteCard(
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
+                }
+
+                IconButton(onClick = onToggleFavorite) {
+                    Icon(
+                        imageVector = if (note.isFavorite) Icons.Default.Star else Icons.Default.StarBorder,
+                        contentDescription = "Favorito",
+                        tint = if (note.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 

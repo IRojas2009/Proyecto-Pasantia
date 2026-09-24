@@ -5,5 +5,6 @@ data class Note(
     val title: String = "",
     val content: String = "",
     val category: String = "",
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val isFavorite: Boolean = false
 )

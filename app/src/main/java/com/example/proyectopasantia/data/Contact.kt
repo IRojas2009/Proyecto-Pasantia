@@ -5,5 +5,6 @@ data class Contact(
     val name: String = "",
     val phone: String = "",
     val email: String = "",
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val isFavorite: Boolean = false
 )
