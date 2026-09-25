@@ -61,9 +61,9 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.ui:ui:1.11.0")
+    implementation("androidx.compose.ui:ui-tooling-preview:1.11.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose")
     implementation("androidx.activity:activity-compose")
-    debugImplementation("androidx.compose.ui:ui-tooling")
+    debugImplementation("androidx.compose.ui:ui-tooling:1.11.0")
 }
